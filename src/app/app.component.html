@@ -1,0 +1,702 @@
+<div class="app-layout">
+  <!-- Encabezado Principal Institucional SENATI -->
+  <header class="app-header" [class.header-offline]="!online">
+    <div class="header-container">
+      <div class="header-brand">
+        <div class="senati-badge">S</div>
+        <div class="brand-text">
+          <div class="brand-title-row">
+            <h1 class="brand-title">SENATI TaskHub PWA</h1>
+            <span class="institutional-tag">ETI</span>
+          </div>
+          <p class="brand-subtitle">
+            <span class="role-badge">{{ rolActual }}</span>
+            <span class="status-connection-badge" [class.is-online]="online" [class.is-offline]="!online">
+              <span class="status-dot"></span>
+              {{ online ? 'En Línea' : 'Sin Conexión' }}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Navegación Superior para Desktop / Tablet -->
+      <nav class="desktop-nav">
+        <button 
+          type="button" 
+          class="nav-tab-btn" 
+          [class.active]="tabActiva === 'tareas'" 
+          (click)="tabActiva = 'tareas'">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <span>Tareas</span>
+        </button>
+        <button 
+          type="button" 
+          class="nav-tab-btn" 
+          [class.active]="tabActiva === 'entregas'" 
+          (click)="tabActiva = 'entregas'">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
+          <span>{{ rolActual === 'Estudiante' ? 'Entregas' : 'Sincronizar' }}</span>
+          @if (cantidadPendientes > 0) {
+            <span class="nav-pill-badge">{{ cantidadPendientes }}</span>
+          }
+        </button>
+        <button 
+          type="button" 
+          class="nav-tab-btn" 
+          [class.active]="tabActiva === 'perfil'" 
+          (click)="tabActiva = 'perfil'">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span>Perfil</span>
+        </button>
+      </nav>
+
+      <!-- Botón de Simulación de Red -->
+      <div class="header-actions">
+        <button 
+          type="button" 
+          class="btn-network-toggle" 
+          [class.btn-network-offline]="!online"
+          (click)="alternarModoSimulado()" 
+          [title]="online ? 'Simular desconexión de red' : 'Simular reconexión de red'">
+          @if (online) {
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+            <span>Simular Offline</span>
+          } @else {
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+            <span>Simular Online</span>
+          }
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notificación Flotante -->
+  @if (notificacionMensaje) {
+    <div class="notification-toast-container">
+      <div class="notification-toast" [class]="'toast-' + tipoNotificacion">
+        <div class="toast-body">
+          <div class="toast-icon-wrap">
+            @if (tipoNotificacion === 'success') {
+              <svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            } @else if (tipoNotificacion === 'offline') {
+              <svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            } @else {
+              <svg class="toast-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+            }
+          </div>
+          <span class="toast-text">{{ notificacionMensaje }}</span>
+          <button type="button" class="btn-close-toast" (click)="limpiarNotificacion()" aria-label="Cerrar notificación">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Contenedor Responsivo Central -->
+  <main class="main-content-wrapper">
+    <!-- TAB 1: TAREAS Y FORMULARIO (INTERFAZ DUAL RESPONSIVA) -->
+    @if (tabActiva === 'tareas') {
+      <!-- Barra Superior: Estado del Sensor y Selector de Rol -->
+      <section class="control-banner">
+        <!-- Sensor de Estado de Conexión -->
+        <div class="status-banner" [class.status-online]="online" [class.status-offline]="!online">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span class="status-text">
+              {{ online ? 'Estado: CONECTADO' : 'Estado: SIN CONEXIÓN - Modo Local' }}
+            </span>
+          </div>
+          @if (!online && cantidadPendientes > 0) {
+            <span class="status-badge-count">{{ cantidadPendientes }} pendiente(s) en cola</span>
+          }
+        </div>
+
+        <!-- Conmutador de Rol (Estudiante / Instructor) -->
+        <div class="role-selector-bar">
+          <button 
+            type="button" 
+            class="role-chip" 
+            [class.active]="rolActual === 'Estudiante'" 
+            (click)="cambiarRol('Estudiante')">
+            <svg class="role-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+            <span>Estudiante</span>
+          </button>
+          <button 
+            type="button" 
+            class="role-chip" 
+            [class.active]="rolActual === 'Instructor'" 
+            (click)="cambiarRol('Instructor')">
+            <svg class="role-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+            <span>Instructor</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- VISTA ESTUDIANTE: Layout Responsivo (2 Columnas en Desktop) -->
+      @if (rolActual === 'Estudiante') {
+        <div class="responsive-two-col">
+          <!-- Columna Izquierda: Catálogo de Tareas Asignadas -->
+          <section class="section-card task-list-section">
+            <div class="section-title-wrap">
+              <div class="title-with-icon">
+                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                <h2 class="section-title">Tareas Asignadas</h2>
+              </div>
+              <span class="badge-total">{{ listaTareas.length }} items</span>
+            </div>
+
+            <div class="tasks-list">
+              @for (tarea of listaTareas; track tarea.id) {
+                <article 
+                  class="task-item" 
+                  [class.selected]="tareaSeleccionadaId === tarea.id"
+                  (click)="seleccionarTarea(tarea.id)">
+                  <div class="task-icon-col">
+                    <span class="task-circle-icon">
+                      @if (tarea.curso.includes('PWA')) {
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                        </svg>
+                      } @else if (tarea.curso.includes('Base de Datos')) {
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+                        </svg>
+                      }
+                    </span>
+                  </div>
+                  <div class="task-details-col">
+                    <span class="course-name">{{ tarea.curso }}</span>
+                    <h3 class="task-title">{{ tarea.titulo }}</h3>
+                    <div class="task-meta">
+                      <span class="instructor-tag">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        {{ tarea.instructor }}
+                      </span>
+                      <span class="date-tag">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        {{ tarea.fechaEntrega }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="task-action-col">
+                    <span 
+                      class="state-pill" 
+                      [class.pill-completed]="tarea.estado === 'Completado'"
+                      [class.pill-pending]="tarea.estado === 'Pendiente'">
+                      @if (tarea.estado === 'Completado') {
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      } @else {
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                      }
+                      {{ tarea.estado }}
+                    </span>
+                    <svg class="chevron-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty-state">
+                  <p>Cargando catálogo institucional desde Service Worker / Caché...</p>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- Columna Derecha: Formulario de Registro / Entrega -->
+          <section class="section-card form-section">
+            <div class="section-title-wrap">
+              <div class="title-with-icon">
+                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                <h2 class="section-title">Registrar Entrega / Avance</h2>
+              </div>
+            </div>
+
+            <form (ngSubmit)="enviarEntrega()" #fEstudiante="ngForm" class="submission-form">
+              <div class="form-group">
+                <label for="tareaSelect" class="form-label">Seleccione una tarea:</label>
+                <select 
+                  id="tareaSelect" 
+                  name="tareaSelect" 
+                  [(ngModel)]="tareaSeleccionadaId" 
+                  class="form-control select-control" 
+                  required>
+                  @for (tarea of listaTareas; track tarea.id) {
+                    <option [ngValue]="tarea.id">
+                      {{ tarea.curso }} — {{ tarea.titulo }}
+                    </option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="comentario" class="form-label">Escriba su avance o comentario:</label>
+                <textarea 
+                  id="comentario" 
+                  name="comentario" 
+                  rows="4" 
+                  [(ngModel)]="comentarioEntrega" 
+                  class="form-control textarea-control"
+                  placeholder="Escriba su avance, enlaces o reporte de taller..."
+                  required>
+                </textarea>
+              </div>
+
+              <button 
+                type="submit" 
+                class="btn-submit" 
+                [class.btn-online]="online" 
+                [class.btn-offline]="!online"
+                [disabled]="!comentarioEntrega.trim()">
+                @if (online) {
+                  <svg class="btn-submit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  <span>GUARDAR / ENVIAR ENTREGA</span>
+                } @else {
+                  <svg class="btn-submit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>GUARDAR EN DISPOSITIVO (OFFLINE)</span>
+                }
+              </button>
+
+              <p class="offline-disclaimer">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                Sus cambios se sincronizarán al recuperar la conexión a Internet.
+              </p>
+            </form>
+          </section>
+        </div>
+      }
+
+      <!-- VISTA INSTRUCTOR: Layout Responsivo (2 Columnas en Desktop) -->
+      @if (rolActual === 'Instructor') {
+        <div class="responsive-two-col">
+          <!-- Columna Izquierda: Cursos y Tareas Asignadas -->
+          <section class="section-card task-list-section">
+            <div class="section-title-wrap">
+              <div class="title-with-icon">
+                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                <h2 class="section-title">Mis Cursos y Tareas Asignadas</h2>
+              </div>
+              <span class="badge-total">{{ cursosInstructor.length }} cursos</span>
+            </div>
+
+            <div class="instructor-courses-list">
+              @for (curso of cursosInstructor; track curso.nombre) {
+                <div 
+                  class="instructor-course-card" 
+                  [class.selected]="cursoSeleccionadoInstructor === curso.nombre"
+                  (click)="seleccionarCursoInstructor(curso)">
+                  <div class="course-header-row">
+                    <div class="course-title-wrap">
+                      <span class="course-code-tag">{{ curso.codigo }}</span>
+                      <strong class="course-card-title">{{ curso.nombre }}</strong>
+                    </div>
+                    <span class="badge-pending-count">
+                      <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Pendiente ({{ curso.pendientes }})
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+          <!-- Columna Derecha: Formulario de Registro / Observación Local -->
+          <section class="section-card form-section">
+            <div class="section-title-wrap">
+              <div class="title-with-icon">
+                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <h2 class="section-title">Registrar Observación / Tarea Local</h2>
+              </div>
+            </div>
+
+            <form (ngSubmit)="enviarEntrega()" #fInstructor="ngForm" class="submission-form">
+              <div class="form-group">
+                <label for="cursoInstructor" class="form-label">Curso:</label>
+                <select 
+                  id="cursoInstructor" 
+                  name="cursoInstructor" 
+                  [(ngModel)]="cursoSeleccionadoInstructor" 
+                  class="form-control select-control" 
+                  required>
+                  @for (curso of cursosInstructor; track curso.nombre) {
+                    <option [value]="curso.nombre">{{ curso.nombre }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="nombreTarea" class="form-label">Nombre de tarea:</label>
+                <input 
+                  type="text" 
+                  id="nombreTarea" 
+                  name="nombreTarea" 
+                  [(ngModel)]="nombreTareaInstructor" 
+                  class="form-control"
+                  placeholder="Nombre de tarea...">
+              </div>
+
+              <div class="form-group">
+                <label for="observaciones" class="form-label">Observaciones:</label>
+                <textarea 
+                  id="observaciones" 
+                  name="observaciones" 
+                  rows="4" 
+                  [(ngModel)]="comentarioEntrega" 
+                  class="form-control textarea-control"
+                  placeholder="Observaciones pedagógicas o retroalimentación..."
+                  required>
+                </textarea>
+              </div>
+
+              <button 
+                type="submit" 
+                class="btn-submit" 
+                [class.btn-online]="online" 
+                [class.btn-offline]="!online"
+                [disabled]="!comentarioEntrega.trim()">
+                @if (online) {
+                  <svg class="btn-submit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  <span>GUARDAR / ENVIAR OBSERVACIÓN</span>
+                } @else {
+                  <svg class="btn-submit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span>GUARDAR EN DISPOSITIVO</span>
+                }
+              </button>
+
+              <p class="offline-disclaimer">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                Sus cambios se sincronizarán al recuperar conexión.
+              </p>
+            </form>
+          </section>
+        </div>
+      }
+    }
+
+    <!-- TAB 2: COLA DE PERSISTENCIA LOCAL (INDEXEDDB) / SINCRONIZAR -->
+    @if (tabActiva === 'entregas') {
+      <section class="section-card deliveries-container">
+        <div class="section-title-wrap">
+          <div class="title-with-icon">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            <h2 class="section-title">Persistencia Local (IndexedDB)</h2>
+          </div>
+          <span class="badge-total">{{ entregasLocales.length }} registros</span>
+        </div>
+        <p class="section-description">
+          Base de datos: <code>senatiTaskDB</code> | ObjectStore: <code>entregas_pendientes</code>
+        </p>
+
+        @if (online && cantidadPendientes > 0) {
+          <div class="sync-banner">
+            <div class="sync-text-wrap">
+              <strong>Hay {{ cantidadPendientes }} registro(s) offline pendientes</strong>
+              <p>Puedes sincronizarlos con el Campus Virtual ahora que estás en línea.</p>
+            </div>
+            <button 
+              type="button" 
+              class="btn-sync-now" 
+              (click)="sincronizarPendientes()" 
+              [disabled]="sincronizando">
+              <svg class="btn-sync-svg" [class.rotating]="sincronizando" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              <span>{{ sincronizando ? 'Sincronizando...' : 'Sincronizar Ahora' }}</span>
+            </button>
+          </div>
+        }
+
+        <div class="deliveries-grid">
+          @for (item of entregasLocales; track item.id) {
+            <article class="delivery-item" [class.is-synced]="item.estadoSincronizacion === 'SINCRONIZADO'">
+              <div class="delivery-header">
+                <span class="delivery-course">{{ item.curso || 'Tarea ID: ' + item.tareaId }}</span>
+                <span 
+                  class="sync-chip" 
+                  [class.chip-pending]="item.estadoSincronizacion === 'PENDIENTE'"
+                  [class.chip-synced]="item.estadoSincronizacion === 'SINCRONIZADO'">
+                  @if (item.estadoSincronizacion === 'SINCRONIZADO') {
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                  }
+                  {{ item.estadoSincronizacion }}
+                </span>
+              </div>
+              @if (item.titulo) {
+                <div class="delivery-title-tag">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9a2 2 0 0 1-1.11-1.79V7a2 2 0 0 0-2-2h0a2 2 0 0 0-2 2v3.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24z"/>
+                  </svg>
+                  {{ item.titulo }}
+                </div>
+              }
+              <p class="delivery-comment">"{{ item.comentario }}"</p>
+              <div class="delivery-footer">
+                <span class="delivery-user">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                  {{ item.usuario }}
+                </span>
+                <span class="delivery-date">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  {{ item.fechaRegistro | date:'medium' }}
+                </span>
+              </div>
+            </article>
+          } @empty {
+            <div class="empty-state">
+              <svg class="empty-svg" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+              <p>No hay registros almacenados en IndexedDB.</p>
+              <small>Usa el botón "Simular Offline" y guarda una entrega u observación para verificar la persistencia local NoSQL.</small>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- TAB 3: PERFIL INSTITUCIONAL Y RESPUESTAS ABP -->
+    @if (tabActiva === 'perfil') {
+      <div class="responsive-two-col">
+        <!-- Columna 1: Tarjeta de Perfil Institucional -->
+        <section class="section-card">
+          <div class="profile-card-header">
+            <div class="profile-avatar">
+              @if (rolActual === 'Estudiante') {
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
+              }
+            </div>
+            <div>
+              <h2 class="profile-name">{{ rolActual === 'Estudiante' ? 'Estudiante SENATI' : 'Ing. Jorge Luque Chambi' }}</h2>
+              <p class="profile-role">{{ rolActual === 'Estudiante' ? 'Ingeniería de Software con IA' : 'Instructor - ETI SENATI' }}</p>
+            </div>
+          </div>
+
+          <div class="profile-info-rows">
+            <div class="info-row">
+              <span class="row-label">Institución:</span>
+              <span class="row-value">SENATI - Escuela de Tecnologías de la Información</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Unidad Didáctica:</span>
+              <span class="row-value">Aplicaciones Web Progresivas y Arquitecturas Desconectadas</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Taller:</span>
+              <span class="row-value">SENATI TaskHub PWA (Offline-First)</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Tecnologías:</span>
+              <span class="row-value">Angular 19+, Service Worker, IndexedDB</span>
+            </div>
+            <div class="info-row">
+              <span class="row-label">Estado PWA:</span>
+              <span class="row-value text-online">Instalable / Standalone</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Columna 2: Pilares de la Arquitectura PWA -->
+        <section class="section-card">
+          <div class="section-title-wrap">
+            <div class="title-with-icon">
+              <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/>
+              </svg>
+              <h2 class="section-title">Pilares de la Arquitectura PWA</h2>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-tile">
+              <div class="tile-header">
+                <svg class="tile-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <h3>App Manifest</h3>
+              </div>
+              <p>Identidad visual corporativa SENATI (#0033A0), modo standalone e íconos adaptativos 192x192 y 512x512.</p>
+            </div>
+            <div class="info-tile">
+              <div class="tile-header">
+                <svg class="tile-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                </svg>
+                <h3>Service Worker</h3>
+              </div>
+              <p>Interceptor ngsw con Runtime Caching (estrategia performance) para el catálogo de tareas académicas.</p>
+            </div>
+            <div class="info-tile">
+              <div class="tile-header">
+                <svg class="tile-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+                <h3>IndexedDB</h3>
+              </div>
+              <p>Almacén NoSQL transaccional senatiTaskDB / entregas_pendientes para persistencia y contingencia offline.</p>
+            </div>
+            <div class="info-tile">
+              <div class="tile-header">
+                <svg class="tile-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+                <h3>Interfaz Dual</h3>
+              </div>
+              <p>Sensor reactivo de red navigator.onLine con conmutación visual instantánea de estado, formularios y botones.</p>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Sección Completa: Respuestas a Saberes Previos (Fase 1 ABP) -->
+      <section class="section-card qa-full-section">
+        <div class="section-title-wrap">
+          <div class="title-with-icon">
+            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            <h2 class="section-title">Fase 1: Saberes Previos ABP (Fundamentación Teórica)</h2>
+          </div>
+        </div>
+
+        <div class="qa-block">
+          <article class="qa-item">
+            <h3>1. ¿Por qué una estrategia Offline-First es crítica para entornos industriales y de taller?</h3>
+            <p>
+              En talleres y naves industriales de SENATI, la cobertura móvil o Wi-Fi suele ser inestable debido a maquinaria pesada o bloqueos estructurales. Una arquitectura Offline-First garantiza que el aplicativo nunca se congele ni pierda avances, permitiendo registrar observaciones y entregas localmente con sincronización garantizada al reconectar.
+            </p>
+          </article>
+
+          <article class="qa-item">
+            <h3>2. ¿Cuál es la función del archivo manifest.webmanifest en la instalación de una app?</h3>
+            <p>
+              Proporciona los metadatos necesarios (nombre corporativo, colores institucionales, modo de visualización <code>standalone</code> e íconos adaptativos) para permitir la instalación de la aplicación en la pantalla de inicio del dispositivo como una app nativa sin requerir tiendas de aplicaciones.
+            </p>
+          </article>
+
+          <article class="qa-item">
+            <h3>3. ¿Qué diferencia existe entre almacenar recursos en Cache Storage y datos estructurados en IndexedDB?</h3>
+            <p>
+              <strong>Cache Storage:</strong> Almacena pares Request/Response HTTP (HTML, CSS, JS, fuentes, imágenes y respuestas JSON estáticas de APIs) gestionadas por el Service Worker.
+              <br>
+              <strong>IndexedDB:</strong> Base de datos transaccional NoSQL del navegador orientada a documentos/objetos JSON, idónea para encolar transacciones mutables, formularios de entrega y comentarios pendientes.
+            </p>
+          </article>
+        </div>
+      </section>
+    }
+  </main>
+
+  <!-- Barra de Navegación Inferior (Visible en Móvil) -->
+  <nav class="bottom-nav">
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="tabActiva === 'tareas'" 
+      (click)="tabActiva = 'tareas'">
+      <svg class="bottom-nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+      </svg>
+      <span class="nav-label">Tareas</span>
+    </button>
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="tabActiva === 'entregas'" 
+      (click)="tabActiva = 'entregas'">
+      <div class="bottom-nav-icon-wrap">
+        <svg class="bottom-nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+        </svg>
+        @if (cantidadPendientes > 0) {
+          <span class="tab-badge">{{ cantidadPendientes }}</span>
+        }
+      </div>
+      <span class="nav-label">{{ rolActual === 'Estudiante' ? 'Entregas' : 'Sincronizar' }}</span>
+    </button>
+    <button 
+      type="button" 
+      class="nav-tab" 
+      [class.active]="tabActiva === 'perfil'" 
+      (click)="tabActiva = 'perfil'">
+      <svg class="bottom-nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>

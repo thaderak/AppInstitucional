@@ -1,0 +1,26 @@
+[
+  {
+    "id": 101,
+    "curso": "Desarrollo de Software PWA",
+    "titulo": "Entregable 01: Configuración de Service Worker",
+    "instructor": "Ing. Jorge Luque",
+    "fechaEntrega": "2026-10-15",
+    "estado": "Pendiente"
+  },
+  {
+    "id": 102,
+    "curso": "Base de Datos Avanzada",
+    "titulo": "Laboratorio 03: Script DDL PostgreSQL",
+    "instructor": "Ing. Carlos Mendoza",
+    "fechaEntrega": "2026-10-18",
+    "estado": "Completado"
+  },
+  {
+    "id": 103,
+    "curso": "IA Aplicada",
+    "titulo": "Actividad 02: Modelo Predictivo con Machine Learning",
+    "instructor": "Ing. Jorge Luque",
+    "fechaEntrega": "2026-10-22",
+    "estado": "Pendiente"
+  }
+]
